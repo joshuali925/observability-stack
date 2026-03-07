@@ -1,0 +1,366 @@
+---
+// Features component for OpenSearch AgentOps marketing website
+// Displays four main features with alternating layouts
+
+interface Feature {
+  id: string;
+  icon: string;
+  title: string;
+  description: string;
+  bullets: string[];
+  visualType: 'code' | 'mockup' | 'grid';
+  visualContent: any;
+  imagePosition: 'left' | 'right';
+}
+
+// SVG icon paths
+const iconPaths = {
+  activity: 'M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z',
+  'file-text': 'M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z',
+  'check-circle': 'M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z',
+  'zap': 'M13 10V3L4 14h7v7l9-11h-7z',
+};
+
+const features: Feature[] = [
+  {
+    id: 'apm-tracing',
+    icon: 'activity',
+    title: 'APM & Distributed Tracing',
+    description: 'End-to-end visibility across services with service maps, latency breakdowns, and error tracking. OpenTelemetry-native.',
+    bullets: [
+      'Service maps and dependency visualization',
+      'Distributed trace correlation across services',
+      'Latency percentiles, error rates, and throughput',
+    ],
+    visualType: 'code',
+    visualContent: {
+      language: 'yaml',
+      code: `# otel-collector-config.yaml
+receivers:
+  otlp:
+    protocols:
+      grpc:
+        endpoint: 0.0.0.0:4317
+
+exporters:
+  opensearch:
+    http:
+      endpoint: https://opensearch:9200
+    dataset: traces
+
+service:
+  pipelines:
+    traces:
+      receivers: [otlp]
+      exporters: [opensearch]`,
+    },
+    imagePosition: 'right',
+  },
+  {
+    id: 'metrics-dashboards',
+    icon: 'zap',
+    title: 'Metrics & Dashboards',
+    description: 'Prometheus-compatible metrics with PromQL support. Custom dashboards and RED metrics computed automatically from trace data.',
+    bullets: [
+      'Prometheus remote-write and native PromQL support',
+      'RED metrics (Rate, Errors, Duration) from Data Prepper',
+      'Custom dashboards with real-time panels and charts',
+    ],
+    visualType: 'grid',
+    visualContent: {
+      items: [
+        { title: 'Request Rate', progress: 99 },
+        { title: 'P99 Latency', progress: 95 },
+        { title: 'Error Rate', progress: 82 },
+        { title: 'Throughput', progress: 97 },
+        { title: 'Saturation', progress: 88 },
+        { title: 'Availability', progress: 94 },
+        { title: 'P50 Latency', progress: 91 },
+        { title: 'Success Rate', progress: 96 },
+      ],
+    },
+    imagePosition: 'left',
+  },
+  {
+    id: 'logs',
+    icon: 'file-text',
+    title: 'Log Analytics & Correlation',
+    description: 'Ingest, search, and correlate logs with traces. Full-text search with PPL and OpenTelemetry-native log collection.',
+    bullets: [
+      'Log-to-trace correlation in one click',
+      'Full-text search with PPL structured field queries',
+      'OTel-native log ingestion via OTLP',
+    ],
+    visualType: 'mockup',
+    visualContent: {
+      type: 'prompt-card',
+    },
+    imagePosition: 'right',
+  },
+  {
+    id: 'ai-observability',
+    icon: 'check-circle',
+    title: 'AI Agent & LLM Observability',
+    description: 'Trace AI agent workflows with OpenTelemetry GenAI semantic conventions. Visualize execution graphs, monitor token usage, and debug agent behavior.',
+    bullets: [
+      'Agent tracing with tool-call and reasoning step visualization',
+      'GenAI semantic conventions for standard, interoperable traces',
+      'MCP support and Python/JavaScript SDKs',
+    ],
+    visualType: 'mockup',
+    visualContent: {
+      type: 'alert-card',
+    },
+    imagePosition: 'left',
+  },
+];
+---
+
+<section id="features" class="py-20 bg-slate-900">
+  <div class="container mx-auto px-6">
+    <div class="max-w-6xl mx-auto">
+      <!-- Section Header -->
+      <div class="text-center mb-16">
+        <h2 class="text-3xl md:text-4xl font-bold text-white mb-4">
+          Full-Stack Observability, One Platform
+        </h2>
+        <p class="text-lg text-slate-400 max-w-3xl mx-auto">
+          From service health to AI agent performance — traces, logs, metrics, dashboards, and more
+        </p>
+      </div>
+
+      <!-- Feature Blocks -->
+      <div class="space-y-24">
+        {features.map((feature, index) => {
+          const isImageLeft = feature.imagePosition === 'left';
+          
+          return (
+            <div 
+              class={`feature-block flex flex-col ${isImageLeft ? 'lg:flex-row-reverse' : 'lg:flex-row'} gap-12 items-center`}
+              data-feature-id={feature.id}
+            >
+              <!-- Content Side -->
+              <div class="flex-1 space-y-6">
+                <!-- Icon -->
+                <div class="w-14 h-14 rounded-xl bg-indigo-500/10 border border-indigo-500/20 flex items-center justify-center">
+                  <svg 
+                    class="w-7 h-7 text-indigo-500" 
+                    fill="none" 
+                    stroke="currentColor" 
+                    viewBox="0 0 24 24"
+                    aria-hidden="true"
+                  >
+                    <path 
+                      stroke-linecap="round" 
+                      stroke-linejoin="round" 
+                      stroke-width="2" 
+                      d={iconPaths[feature.icon]}
+                    />
+                  </svg>
+                </div>
+
+                <!-- Title -->
+                <h3 class="text-2xl md:text-3xl font-bold text-white">
+                  {feature.title}
+                </h3>
+
+                <!-- Description -->
+                <p class="text-lg text-slate-400 leading-relaxed">
+                  {feature.description}
+                </p>
+
+                <!-- Bullet Points -->
+                <ul class="space-y-3">
+                  {feature.bullets.map((bullet) => (
+                    <li class="flex items-start gap-3">
+                      <svg 
+                        class="w-5 h-5 text-green-500 mt-0.5 flex-shrink-0" 
+                        fill="none" 
+                        stroke="currentColor" 
+                        viewBox="0 0 24 24"
+                        aria-hidden="true"
+                      >
+                        <path 
+                          stroke-linecap="round" 
+                          stroke-linejoin="round" 
+                          stroke-width="2" 
+                          d="M5 13l4 4L19 7"
+                        />
+                      </svg>
+                      <span class="text-slate-300">{bullet}</span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+
+              <!-- Visual Side -->
+              <div class="flex-1 w-full">
+                {feature.visualType === 'code' && (
+                  <div class="code-snippet rounded-xl overflow-hidden border border-slate-700 bg-slate-950">
+                    <!-- Code header -->
+                    <div class="flex items-center justify-between px-4 py-3 bg-slate-900 border-b border-slate-700">
+                      <div class="flex items-center gap-2">
+                        <div class="w-3 h-3 rounded-full bg-red-500"></div>
+                        <div class="w-3 h-3 rounded-full bg-yellow-500"></div>
+                        <div class="w-3 h-3 rounded-full bg-green-500"></div>
+                      </div>
+                      <span class="text-xs text-slate-500 font-mono">{feature.visualContent.language}</span>
+                    </div>
+                    <!-- Code content -->
+                    <pre class="p-6 overflow-x-auto"><code class="text-sm font-mono text-slate-300 leading-relaxed">{feature.visualContent.code}</code></pre>
+                  </div>
+                )}
+
+                {feature.visualType === 'mockup' && feature.visualContent.type === 'prompt-card' && (
+                  <div class="prompt-mockup rounded-xl border border-slate-700 bg-slate-900 p-6 space-y-4">
+                    <!-- Log explorer header -->
+                    <div class="flex items-center justify-between">
+                      <div class="flex items-center gap-3">
+                        <div class="w-10 h-10 rounded-lg bg-indigo-500/10 border border-indigo-500/20 flex items-center justify-center">
+                          <svg class="w-5 h-5 text-indigo-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                          </svg>
+                        </div>
+                        <div>
+                          <div class="text-sm font-semibold text-white">Log Explorer</div>
+                          <div class="text-xs text-slate-500">PPL Query</div>
+                        </div>
+                      </div>
+                      <span class="px-2 py-1 text-xs font-semibold bg-green-500/10 text-green-400 rounded border border-green-500/20">Live</span>
+                    </div>
+
+                    <!-- Query bar -->
+                    <div class="bg-slate-950 rounded-lg p-3 border border-slate-700">
+                      <code class="text-xs text-cyan-400 font-mono">source = ss4o_logs-* | where severity = "ERROR" | sort - timestamp</code>
+                    </div>
+
+                    <!-- Log entries -->
+                    <div class="space-y-2">
+                      <div class="flex items-start gap-2 p-2 rounded bg-slate-950 border border-slate-700">
+                        <span class="text-xs text-red-400 font-mono mt-0.5">ERR</span>
+                        <div class="flex-1">
+                          <div class="text-xs text-slate-300">Connection timeout to upstream service</div>
+                          <div class="text-xs text-slate-500 mt-1">trace_id: 3f2a...8c1d &middot; service: api-gateway</div>
+                        </div>
+                      </div>
+                      <div class="flex items-start gap-2 p-2 rounded bg-slate-950 border border-slate-700">
+                        <span class="text-xs text-yellow-400 font-mono mt-0.5">WARN</span>
+                        <div class="flex-1">
+                          <div class="text-xs text-slate-300">Retry attempt 2/3 for payment-service</div>
+                          <div class="text-xs text-slate-500 mt-1">trace_id: 7b4e...2f9a &middot; service: checkout</div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {feature.visualType === 'grid' && (
+                  <div class="evaluation-grid grid grid-cols-2 gap-4">
+                    {feature.visualContent.items.map((item: any) => (
+                      <div class="eval-card p-4 rounded-xl bg-slate-900 border border-slate-700 hover:border-indigo-500/50 transition-colors duration-300">
+                        <div class="flex items-center justify-between mb-3">
+                          <span class="text-sm font-semibold text-white">{item.title}</span>
+                          <span class="text-sm font-bold text-indigo-400">{item.progress}%</span>
+                        </div>
+                        <!-- Progress bar -->
+                        <div class="h-2 bg-slate-800 rounded-full overflow-hidden">
+                          <div 
+                            class="h-full bg-gradient-to-r from-indigo-500 to-purple-500 rounded-full transition-all duration-500"
+                            style={`width: ${item.progress}%`}
+                          ></div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+
+                {feature.visualType === 'mockup' && feature.visualContent.type === 'alert-card' && (
+                  <div class="insights-mockup space-y-4">
+                    <!-- Agent trace waterfall mockup -->
+                    <div class="rounded-xl border border-slate-700 bg-slate-900 p-5">
+                      <div class="flex items-center justify-between mb-4">
+                        <div class="flex items-center gap-3">
+                          <div class="w-10 h-10 rounded-lg bg-indigo-500/10 border border-indigo-500/20 flex items-center justify-center">
+                            <svg class="w-5 h-5 text-indigo-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                            </svg>
+                          </div>
+                          <div>
+                            <div class="text-sm font-semibold text-white">Agent Trace Waterfall</div>
+                            <div class="text-xs text-slate-500">trace_id: 3f2a...8c1d</div>
+                          </div>
+                        </div>
+                        <span class="px-2 py-1 text-xs font-semibold bg-green-500/10 text-green-400 rounded border border-green-500/20">OK</span>
+                      </div>
+
+                      <!-- Waterfall spans -->
+                      <div class="space-y-2">
+                        <div class="flex items-center gap-3">
+                          <span class="text-xs text-blue-400 w-16 text-right font-mono">Agent</span>
+                          <div class="flex-1 h-5 bg-blue-500/20 rounded border border-blue-500/30 relative">
+                            <div class="absolute inset-y-0 left-0 bg-blue-500/40 rounded" style="width: 100%"></div>
+                            <span class="absolute inset-y-0 left-2 text-xs text-blue-300 leading-5">invoke_agent (1240ms)</span>
+                          </div>
+                        </div>
+                        <div class="flex items-center gap-3">
+                          <span class="text-xs text-orange-400 w-16 text-right font-mono">LLM</span>
+                          <div class="flex-1 h-5 bg-orange-500/20 rounded border border-orange-500/30 relative ml-4">
+                            <div class="absolute inset-y-0 left-0 bg-orange-500/40 rounded" style="width: 60%"></div>
+                            <span class="absolute inset-y-0 left-2 text-xs text-orange-300 leading-5">chat (680ms)</span>
+                          </div>
+                        </div>
+                        <div class="flex items-center gap-3">
+                          <span class="text-xs text-purple-400 w-16 text-right font-mono">Tool</span>
+                          <div class="flex-1 h-5 bg-purple-500/20 rounded border border-purple-500/30 relative ml-8">
+                            <div class="absolute inset-y-0 left-0 bg-purple-500/40 rounded" style="width: 30%"></div>
+                            <span class="absolute inset-y-0 left-2 text-xs text-purple-300 leading-5">search_docs (320ms)</span>
+                          </div>
+                        </div>
+                        <div class="flex items-center gap-3">
+                          <span class="text-xs text-orange-400 w-16 text-right font-mono">LLM</span>
+                          <div class="flex-1 h-5 bg-orange-500/20 rounded border border-orange-500/30 relative ml-4">
+                            <div class="absolute inset-y-0 left-0 bg-orange-500/40 rounded" style="width: 25%"></div>
+                            <span class="absolute inset-y-0 left-2 text-xs text-orange-300 leading-5">chat (240ms)</span>
+                          </div>
+                        </div>
+                      </div>
+
+                      <!-- Metrics row -->
+                      <div class="grid grid-cols-3 gap-3 mt-4">
+                        <div class="text-center p-2 rounded-lg bg-slate-950 border border-slate-700">
+                          <div class="text-sm font-bold text-white">5</div>
+                          <div class="text-xs text-slate-500">Spans</div>
+                        </div>
+                        <div class="text-center p-2 rounded-lg bg-slate-950 border border-slate-700">
+                          <div class="text-sm font-bold text-white">1,847</div>
+                          <div class="text-xs text-slate-500">Tokens</div>
+                        </div>
+                        <div class="text-center p-2 rounded-lg bg-slate-950 border border-slate-700">
+                          <div class="text-sm font-bold text-white">1.24s</div>
+                          <div class="text-xs text-slate-500">Duration</div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  </div>
+</section>
+
+<style>
+  /* Respect reduced motion preferences */
+  @media (prefers-reduced-motion: reduce) {
+    .eval-card {
+      transition: none;
+    }
+    
+    .eval-card .h-full {
+      transition: none;
+    }
+  }
+</style>
