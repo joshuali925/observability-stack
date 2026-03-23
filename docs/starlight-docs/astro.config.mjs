@@ -105,7 +105,7 @@ export default defineConfig({
 					],
 				},
 				{
-					label: 'Investigate',
+					label: 'Discover',
 					collapsed: true,
 					autogenerate: { directory: 'investigate' },
 				},
