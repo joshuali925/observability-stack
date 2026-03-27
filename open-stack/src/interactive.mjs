@@ -88,7 +88,7 @@ async function stepCore(cfg, session) {
 async function stepOpenSearch(cfg) {
   if (cfg.mode !== 'advanced') return 'skip';
 
-  printStep('OpenSearch domain');
+  printStep('OpenSearch');
   console.error();
 
   const osChoice = await eSelect({
@@ -142,33 +142,47 @@ async function stepOpenSearch(cfg) {
   } else {
     cfg.osAction = 'create';
 
-    const domainName = await eInput({ message: 'Domain name', default: cfg.osDomainName || cfg.pipelineName });
+    const osType = await eSelect({
+      message: 'OpenSearch type',
+      choices: [
+        { name: `Serverless ${theme.muted('\u2014 fully managed, auto-scales')}`, value: 'serverless' },
+        { name: `Managed domain ${theme.muted('\u2014 configure instance type, count, and storage')}`, value: 'managed' },
+      ],
+      default: cfg.serverless === true ? 'serverless' : cfg.serverless === false ? 'managed' : 'serverless',
+    });
+    if (osType === GoBack) return GoBack;
+    cfg.serverless = osType === 'serverless';
+
+    const nameMsg = cfg.serverless ? 'Collection name' : 'Domain name';
+    const domainName = await eInput({ message: nameMsg, default: cfg.osDomainName || cfg.pipelineName });
     if (domainName === GoBack) return GoBack;
     cfg.osDomainName = domainName;
 
-    const instType = await eInput({ message: 'Instance type', default: cfg.osInstanceType || DEFAULTS.osInstanceType });
-    if (instType === GoBack) return GoBack;
-    cfg.osInstanceType = instType;
+    if (!cfg.serverless) {
+      const instType = await eInput({ message: 'Instance type', default: cfg.osInstanceType || DEFAULTS.osInstanceType });
+      if (instType === GoBack) return GoBack;
+      cfg.osInstanceType = instType;
 
-    const instCount = await eInput({
-      message: 'Instance count',
-      default: String(cfg.osInstanceCount || DEFAULTS.osInstanceCount),
-      validate: (v) => /^\d+$/.test(v.trim()) && Number(v) >= 1 || 'Must be a positive integer',
-    });
-    if (instCount === GoBack) return GoBack;
-    cfg.osInstanceCount = Number(instCount);
+      const instCount = await eInput({
+        message: 'Instance count',
+        default: String(cfg.osInstanceCount || DEFAULTS.osInstanceCount),
+        validate: (v) => /^\d+$/.test(v.trim()) && Number(v) >= 1 || 'Must be a positive integer',
+      });
+      if (instCount === GoBack) return GoBack;
+      cfg.osInstanceCount = Number(instCount);
 
-    const volSize = await eInput({
-      message: 'EBS volume size (GB)',
-      default: String(cfg.osVolumeSize || DEFAULTS.osVolumeSize),
-      validate: (v) => /^\d+$/.test(v.trim()) && Number(v) >= 10 || 'Must be at least 10 GB',
-    });
-    if (volSize === GoBack) return GoBack;
-    cfg.osVolumeSize = Number(volSize);
+      const volSize = await eInput({
+        message: 'EBS volume size (GB)',
+        default: String(cfg.osVolumeSize || DEFAULTS.osVolumeSize),
+        validate: (v) => /^\d+$/.test(v.trim()) && Number(v) >= 10 || 'Must be at least 10 GB',
+      });
+      if (volSize === GoBack) return GoBack;
+      cfg.osVolumeSize = Number(volSize);
 
-    const engineVer = await eInput({ message: 'Engine version', default: cfg.osEngineVersion || DEFAULTS.osEngineVersion });
-    if (engineVer === GoBack) return GoBack;
-    cfg.osEngineVersion = engineVer;
+      const engineVer = await eInput({ message: 'Engine version', default: cfg.osEngineVersion || DEFAULTS.osEngineVersion });
+      if (engineVer === GoBack) return GoBack;
+      cfg.osEngineVersion = engineVer;
+    }
   }
 }
 
