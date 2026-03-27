@@ -1,5 +1,5 @@
 import { execSync, spawn } from 'node:child_process';
-import { mkdtempSync, rmSync } from 'node:fs';
+import { mkdtempSync, rmSync, readFileSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import {
@@ -39,6 +39,7 @@ export function checkDemoPrerequisites() {
   console.error();
 
   const required = [
+    { cmd: 'aws', install: 'https://docs.aws.amazon.com/cli/latest/userguide/getting-started-install.html' },
     { cmd: 'eksctl', install: 'https://eksctl.io/installation/' },
     { cmd: 'kubectl', install: 'https://kubernetes.io/docs/tasks/tools/' },
     { cmd: 'helm', install: 'https://helm.sh/docs/intro/install/' },
@@ -62,7 +63,7 @@ export function checkDemoPrerequisites() {
       console.error(`    ${chalk.bold(cmd)}: ${chalk.underline(install)}`);
     }
     console.error();
-    throw new Error('Missing required CLI tools. Install them and try again.');
+    process.exit(1);
   }
 
   console.error();
@@ -207,6 +208,15 @@ export async function installHelmChart(cfg) {
       throw new Error('Failed to clone Helm chart repository');
     }
 
+    // Patch: remove duplicate data-prepper metrics port (4900).
+    // The subchart template hardcodes a "server" port on 4900, so having
+    // "metrics: 4900" in values.yaml causes a duplicate port warning.
+    try {
+      const valuesPath = join(chartDir, 'values.yaml');
+      const values = readFileSync(valuesPath, 'utf-8');
+      writeFileSync(valuesPath, values.replace(/^\s*- name: metrics\n\s*port: 4900\n/m, ''));
+    } catch { /* best effort — chart may have been fixed upstream */ }
+
     // Build dependencies
     const depSpinner = createSpinner('Building Helm dependencies...');
     depSpinner.start();
@@ -229,7 +239,7 @@ export async function installHelmChart(cfg) {
       '--namespace', HELM_NAMESPACE,
       '--create-namespace',
       '--wait',
-      '--timeout', '10m',
+      '--timeout', '20m',
     ];
 
     // If the stack config has an OTLP endpoint, pass it as a value override
