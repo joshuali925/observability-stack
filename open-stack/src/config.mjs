@@ -47,6 +47,7 @@ export function createDefaultConfig() {
     appName: '',
     appId: '',
     appEndpoint: '',
+    ingestEndpoints: [],
     outputFile: '',
     dryRun: false,
     accountId: '',

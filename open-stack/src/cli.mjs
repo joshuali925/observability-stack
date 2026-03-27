@@ -6,6 +6,12 @@ import { DEFAULTS } from './config.mjs';
  * Returns null when no flags were given (triggers interactive mode).
  */
 export function parseCli(argv) {
+  // No args → interactive REPL
+  if (argv.length <= 2) return null;
+
+  // Demo subcommand — separate parser to avoid option conflicts
+  if (argv[2] === 'demo') return parseDemoArgs(argv);
+
   const program = new Command()
     .name('open-stack')
     .description(
@@ -63,13 +69,24 @@ export function parseCli(argv) {
     .option('--dry-run', 'Generate config only; do not create AWS resources');
 
   program.parse(argv);
+
+  return optsToConfig(program.opts());
+}
+
+function parseDemoArgs(argv) {
+  const program = new Command()
+    .name('open-stack demo')
+    .description('Create an EKS cluster and install the observability stack + OTel demo')
+    .option('--cluster-name <name>', 'EKS cluster name', 'open-stack-demo')
+    .option('--region <region>', 'AWS region', process.env.AWS_REGION || process.env.AWS_DEFAULT_REGION)
+    .option('--pipeline <name>', 'Existing OSI pipeline name to connect')
+    .option('--node-count <n>', 'Number of EKS nodes', '3')
+    .option('--instance-type <type>', 'EKS node instance type', 'm8i.large')
+    .option('--skip-otel-demo', 'Skip installing the OpenTelemetry Demo app');
+
+  program.parse(argv.slice(1));
   const opts = program.opts();
-
-  // If no meaningful flags were provided, return null → interactive
-  const userArgs = argv.slice(2);
-  if (userArgs.length === 0) return null;
-
-  return optsToConfig(opts);
+  return { _command: 'demo', ...opts, nodeCount: Number(opts.nodeCount) };
 }
 
 /**
@@ -189,7 +206,7 @@ export function fillDryRunPlaceholders(cfg) {
     cfg.dqsDataSourceArn = `arn:aws:opensearch:${cfg.region}:${cfg.accountId || '123456789012'}:datasource/${cfg.dqsDataSourceName}`;
   }
   if (!cfg.appEndpoint) {
-    cfg.appEndpoint = `https://<app-id>.${cfg.region}.opensearch.amazonaws.com/_dashboards`;
+    cfg.appEndpoint = `https://<app-id>.${cfg.region}.opensearch.amazonaws.com`;
   }
 }
 

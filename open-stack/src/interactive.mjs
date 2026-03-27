@@ -389,7 +389,7 @@ async function stepApp(cfg) {
           if (url === GoBack) continue;
           cfg.dashboardsUrl = url;
         } else {
-          cfg.dashboardsUrl = selected.startsWith('http') ? `${selected}/_dashboards` : selected;
+          cfg.dashboardsUrl = selected;
         }
       } else {
         printInfo('No applications found \u2014 enter URL manually');

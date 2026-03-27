@@ -624,7 +624,7 @@ export async function createOsiPipeline(cfg, pipelineYaml) {
   // Wait for pipeline to become active
   const spinner = createSpinner('Waiting for pipeline to activate...');
   spinner.start();
-  const maxWait = 300_000; // 5 min
+  const maxWait = 900_000; // 15 min
   const start = Date.now();
 
   while (Date.now() - start < maxWait) {
@@ -632,10 +632,11 @@ export async function createOsiPipeline(cfg, pipelineYaml) {
       const resp = await client.send(new GetPipelineCommand({ PipelineName: cfg.pipelineName }));
       const status = resp.Pipeline?.Status;
       if (status === 'ACTIVE') {
-        const urls = resp.Pipeline?.IngestEndpointUrls;
+        const urls = resp.Pipeline?.IngestEndpointUrls || [];
+        cfg.ingestEndpoints = urls;
         spinner.succeed('Pipeline is active');
-        if (urls?.length) {
-          printInfo(`Ingestion endpoint: ${urls[0]}`);
+        for (const url of urls) {
+          printInfo(`Ingestion endpoint: https://${url}`);
         }
         return;
       }
@@ -645,13 +646,16 @@ export async function createOsiPipeline(cfg, pipelineYaml) {
         printInfo(`Reason: ${reason}`);
         throw new Error(`Pipeline creation failed: ${reason}`);
       }
-    } catch { /* keep polling */ }
+    } catch (err) {
+      if (err.message?.startsWith('Pipeline creation failed')) throw err;
+      /* keep polling */
+    }
     await sleepWithTicker(10_000, spinner, start,
       (s) => `Waiting for pipeline... (${fmtElapsed(s)})`);
   }
 
-  spinner.warn('Timed out waiting — pipeline may still be provisioning');
-  printInfo(`Check: aws osis get-pipeline --pipeline-name ${cfg.pipelineName} --region ${cfg.region}`);
+  spinner.fail('Timed out waiting for pipeline after 15 minutes');
+  throw new Error(`Pipeline '${cfg.pipelineName}' did not become active within 15 minutes`);
 }
 
 // ── OpenSearch UI workspace ──────────────────────────────────────────
@@ -678,16 +682,15 @@ export async function setupDashboards(cfg) {
     await fetchAppEndpoint(client, cfg);
   }
   if (cfg.appEndpoint) {
-    cfg.dashboardsUrl = `${cfg.appEndpoint}/_dashboards`;
+    cfg.dashboardsUrl = cfg.appEndpoint;
     printSuccess(`Dashboards URL: ${cfg.dashboardsUrl}`);
   } else {
     cfg.dashboardsUrl = `${cfg.opensearchEndpoint}/_dashboards`;
     printSuccess(`Dashboards URL: ${cfg.dashboardsUrl}`);
-  }
-
-  // Create observability workspace (managed domains only — uses basic auth)
-  if (!cfg.serverless && !cfg.appEndpoint) {
-    await createObservabilityWorkspace(cfg);
+    // Create observability workspace (managed domains only — uses basic auth)
+    if (!cfg.serverless) {
+      await createObservabilityWorkspace(cfg);
+    }
   }
 }
 
@@ -895,6 +898,12 @@ export async function createOpenSearchApplication(cfg) {
     const result = await client.send(new CreateApplicationCommand({
       name: appName,
       dataSources,
+      appConfigs: [
+        {
+          key: 'opensearchDashboards.dashboardAdmin.users',
+          value: JSON.stringify(['*']),
+        },
+      ],
       iamIdentityCenterOptions: {
         enabled: false,
       },
@@ -934,7 +943,7 @@ async function fetchAppEndpoint(client, cfg) {
     const resp = await client.send(new GetApplicationCommand({ id: cfg.appId }));
     cfg.appEndpoint = resp.endpoint || '';
     if (cfg.appEndpoint) {
-      printInfo(`Application URL: ${cfg.appEndpoint}/_dashboards`);
+      printInfo(`Application URL: ${cfg.appEndpoint}`);
     }
   } catch { /* best effort */ }
 }
@@ -1376,7 +1385,7 @@ export async function describeResource(region, resource) {
       const appId = name;
       const resp = await client.send(new GetApplicationCommand({ id: appId }));
       if (resp.status) entries.push(['Status', resp.status]);
-      if (resp.endpoint) entries.push(['Endpoint', `${resp.endpoint}/_dashboards`]);
+      if (resp.endpoint) entries.push(['Endpoint', resp.endpoint]);
       if (resp.dataSources?.length) {
         for (const ds of resp.dataSources) {
           if (ds.dataSourceArn) entries.push(['Data Source', ds.dataSourceArn]);
