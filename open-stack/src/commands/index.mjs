@@ -1,12 +1,11 @@
 import { runCreate } from './create.mjs';
 import { runList } from './list.mjs';
 import { runDescribe } from './describe.mjs';
-import { runUpdate } from './update.mjs';
 import { listStacks } from '../aws.mjs';
 import { createSpinner, theme } from '../ui.mjs';
 
 /**
- * Load stacks with a spinner. Shared by describe, list, and update commands.
+ * Load stacks with a spinner. Shared by describe and list commands.
  */
 export async function loadStacks(region) {
   const spinner = createSpinner('Loading stacks...');
@@ -25,13 +24,11 @@ export const COMMANDS = {
   create: runCreate,
   list: runList,
   describe: runDescribe,
-  update: runUpdate,
 };
 
 export const COMMAND_CHOICES = [
   { name: `\u2728 Create    ${theme.muted('Create a new observability stack')}`, value: 'create' },
   { name: `\u2630 List      ${theme.muted('List existing stacks')}`, value: 'list' },
   { name: `\uD83D\uDD0D Describe  ${theme.muted('Show details of a stack')}`, value: 'describe' },
-  { name: `\u270E  Update    ${theme.muted('Update a stack')}`, value: 'update' },
   { name: `\uD83D\uDEAA Quit      ${theme.muted('Exit')}`, value: 'quit' },
 ];

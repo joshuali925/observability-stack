@@ -36,7 +36,6 @@ import {
   ListPipelinesCommand,
   CreatePipelineCommand,
   GetPipelineCommand,
-  UpdatePipelineCommand,
 } from '@aws-sdk/client-osis';
 import {
   ResourceGroupsTaggingAPIClient,
@@ -1109,75 +1108,6 @@ export async function listPipelines(region) {
   }));
 }
 
-/**
- * Get full details of a single OSI pipeline.
- */
-export async function getPipeline(region, pipelineName) {
-  const client = new OSISClient({ region });
-  const resp = await client.send(new GetPipelineCommand({ PipelineName: pipelineName }));
-  const p = resp.Pipeline;
-  return {
-    name: p.PipelineName,
-    arn: p.PipelineArn,
-    status: p.Status,
-    statusReason: p.StatusReason?.Description,
-    minUnits: p.MinUnits,
-    maxUnits: p.MaxUnits,
-    ingestEndpoints: p.IngestEndpointUrls || [],
-    createdAt: p.CreatedAt,
-    lastUpdatedAt: p.LastUpdatedAt,
-    pipelineConfigurationBody: p.PipelineConfigurationBody,
-    logPublishingOptions: p.LogPublishingOptions,
-    bufferOptions: p.BufferOptions,
-  };
-}
-
-/**
- * Update an OSI pipeline.
- * @param {string} region
- * @param {string} pipelineName
- * @param {{ minUnits?: number, maxUnits?: number, pipelineConfigurationBody?: string, logPublishingOptions?: object, bufferOptions?: object }} params
- */
-export async function updatePipeline(region, pipelineName, params) {
-  const client = new OSISClient({ region });
-
-  const cmd = { PipelineName: pipelineName };
-  if (params.minUnits != null) cmd.MinUnits = params.minUnits;
-  if (params.maxUnits != null) cmd.MaxUnits = params.maxUnits;
-  if (params.pipelineConfigurationBody != null) cmd.PipelineConfigurationBody = params.pipelineConfigurationBody;
-  if (params.logPublishingOptions != null) cmd.LogPublishingOptions = params.logPublishingOptions;
-  if (params.bufferOptions != null) cmd.BufferOptions = params.bufferOptions;
-
-  await client.send(new UpdatePipelineCommand(cmd));
-
-  // Poll for update completion
-  const spinner = createSpinner('Waiting for pipeline update...');
-  spinner.start();
-  const maxWait = 300_000;
-  const start = Date.now();
-
-  while (Date.now() - start < maxWait) {
-    try {
-      const resp = await client.send(new GetPipelineCommand({ PipelineName: pipelineName }));
-      const status = resp.Pipeline?.Status;
-      if (status === 'ACTIVE') {
-        spinner.succeed('Pipeline updated successfully');
-        return;
-      }
-      if (status === 'UPDATE_FAILED') {
-        const reason = resp.Pipeline?.StatusReason?.Description || 'unknown';
-        spinner.fail('Pipeline update failed');
-        throw new Error(`Pipeline update failed: ${reason}`);
-      }
-    } catch (err) {
-      if (err.message.startsWith('Pipeline update failed')) throw err;
-    }
-    await sleepWithTicker(10_000, spinner, start,
-      (s) => `Waiting for pipeline update... (${fmtElapsed(s)})`);
-  }
-
-  spinner.warn('Timed out waiting for update — pipeline may still be updating');
-}
 
 // ── Stack discovery (tag-based) ──────────────────────────────────────────────
 

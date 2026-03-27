@@ -7,7 +7,6 @@ export async function runHelp() {
     `${theme.accentBold('create')}      Create a new observability stack`,
     `${theme.accentBold('list')}        List existing stacks`,
     `${theme.accentBold('describe')}    Show details of a stack`,
-    `${theme.accentBold('update')}      Update a stack's settings`,
     `${theme.accentBold('help')}        Show this help message`,
     `${theme.accentBold('quit')}        Exit Open Stack`,
     '',
