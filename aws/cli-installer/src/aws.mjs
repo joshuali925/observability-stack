@@ -3,6 +3,7 @@ import {
   OpenSearchClient,
   CreateDomainCommand,
   DescribeDomainCommand,
+  DescribeDomainChangeProgressCommand,
   ListDomainNamesCommand,
   DescribeDomainsCommand,
   AddDirectQueryDataSourceCommand,
@@ -30,6 +31,7 @@ import {
   ListPipelinesCommand,
   CreatePipelineCommand,
   GetPipelineCommand,
+  GetPipelineChangeProgressCommand,
 } from '@aws-sdk/client-osis';
 import {
   ResourceGroupsTaggingAPIClient,
@@ -272,7 +274,17 @@ async function createManagedDomain(cfg) {
   while (Date.now() - start < maxWait) {
     try {
       const desc = await client.send(new DescribeDomainCommand({ DomainName: cfg.osDomainName }));
-      const endpoint = desc.DomainStatus?.Endpoint;
+      const ds = desc.DomainStatus || {};
+      const endpoint = ds.Endpoint;
+
+      // Feed real stage progress into the owl animation
+      try {
+        const cp = await client.send(new DescribeDomainChangeProgressCommand({ DomainName: cfg.osDomainName }));
+        const stages = cp.ChangeProgressStatus?.ChangeProgressStages || [];
+        const current = stages.find((s) => s.Status === 'IN_PROGRESS') || stages.findLast((s) => s.Status === 'COMPLETED');
+        anim.setDomainStatus(current?.Description || current?.Name || 'Initializing...');
+      } catch { /* change progress may not be available yet */ }
+
       if (endpoint) {
         cfg.opensearchEndpoint = `https://${endpoint}`;
         anim.stop();
@@ -570,6 +582,15 @@ export async function createOsiPipeline(cfg, pipelineYaml) {
     try {
       const resp = await client.send(new GetPipelineCommand({ PipelineName: cfg.pipelineName }));
       const status = resp.Pipeline?.Status;
+
+      // Feed real stage progress into the fish animation
+      try {
+        const cp = await client.send(new GetPipelineChangeProgressCommand({ PipelineName: cfg.pipelineName }));
+        const stages = cp.ChangeProgressStatuses?.[0]?.ChangeProgressStages || [];
+        const current = stages.find((s) => s.Status === 'IN_PROGRESS') || stages.findLast((s) => s.Status === 'COMPLETED');
+        anim.setDomainStatus(current?.Description || current?.Name || 'Initializing...');
+      } catch { /* change progress may not be available yet */ }
+
       if (status === 'ACTIVE') {
         const urls = resp.Pipeline?.IngestEndpointUrls || [];
         cfg.ingestEndpoints = urls;

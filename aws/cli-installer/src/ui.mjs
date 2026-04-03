@@ -495,60 +495,46 @@ function createWordRotator() {
   };
 }
 
-// Owl searching through data — for OpenSearch domain provisioning
-const OPENSEARCH_FRAMES = [
-  [
+// Owl eye patterns cycle for animation even when status text is static
+const OWL_EYES = ['{o,o}', '{O,o}', '{o,O}', '{O,O}'];
+const OWL_GEMS = ['◇', '◈', '◆', '★'];
+
+function buildOwlFrame(frameIdx, statusText) {
+  const eyes = OWL_EYES[frameIdx % OWL_EYES.length];
+  const gem = OWL_GEMS[frameIdx % OWL_GEMS.length];
+  const label = statusText || 'provisioning...';
+  const drift = (frameIdx % 4) * 2;
+  const pad = ' '.repeat(drift);
+  return [
     '',
-    "        ,___,",
-    '        {o,o}    ◇ searching...',
-    '        /)__)',
-    '        -"-"-    ◇ ◇ ◇',
+    `        ,___,`,
+    `        ${eyes}${pad}  ${gem} ${label}`,
+    `        /)__)`,
+    `        -"-"-${pad}  ${gem} ${gem} ${gem}`,
     null,
     '',
-  ],
-  [
-    '',
-    "        ,___,",
-    '        {O,o}      ◈ indexing...',
-    '        /)__)',
-    '        -"-"-      ◈ ◈ ◈',
-    null,
-    '',
-  ],
-  [
-    '',
-    "        ,___,",
-    '        {o,O}        ◆ mapping...',
-    '        /)__)',
-    '        -"-"-        ◆ ◆ ◆',
-    null,
-    '',
-  ],
-  [
-    '',
-    "        ,___,",
-    '        {O,O}  ★ found it!',
-    '        /)__)',
-    '        -"-"-  ★ ★ ★',
-    null,
-    '',
-  ],
-];
+  ];
+}
 
 // Fish swimming back and forth through the pipeline
 const FISH_RIGHT = '><(((º>';
 const FISH_LEFT = '<º)))><';
 const PIPE_WIDTH = 36;
 
-function buildPipelineFrame(pos, goingRight, caption) {
+function buildPipelineFrame(pos, goingRight, caption, statusText) {
   const fish = goingRight ? FISH_RIGHT : FISH_LEFT;
   const lane = ' '.repeat(PIPE_WIDTH);
   const row = lane.slice(0, pos) + fish + lane.slice(pos + fish.length);
   const pipe = '═'.repeat(PIPE_WIDTH);
+  const label = statusText || '';
+  const padded = label.length < PIPE_WIDTH
+    ? ' ' + label + ' '.repeat(PIPE_WIDTH - label.length - 1)
+    : ' ' + label.slice(0, PIPE_WIDTH - 1);
   return [
     '',
     `  ${pipe}`,
     `  ${row}`,
+    `  ${padded}`,
     `  ${pipe}`,
     `  ${caption}`,
     '',
@@ -575,16 +561,17 @@ export function createAsciiAnimation(type) {
 
   // OpenSearch state
   let osFrame = 0;
+  let domainStatus = '';
 
   const getWord = createWordRotator();
 
   function getFrame() {
     const word = getWord();
     if (isOpenSearch) {
-      return OPENSEARCH_FRAMES[(osFrame++) % OPENSEARCH_FRAMES.length]
+      return buildOwlFrame(osFrame++, domainStatus)
         .map((l) => l === null ? `      ${word}` : l);
     }
-    const frame = buildPipelineFrame(fishPos, goingRight, word);
+    const frame = buildPipelineFrame(fishPos, goingRight, word, domainStatus);
     if (goingRight) { fishPos++; if (fishPos >= maxPos) goingRight = false; }
     else { fishPos--; if (fishPos <= 0) goingRight = true; }
     return frame;
@@ -624,6 +611,8 @@ export function createAsciiAnimation(type) {
     },
     /** Update the status text shown below the art */
     setStatus(fn) { statusFn = fn; },
+    /** Update the domain status label shown next to the owl */
+    setDomainStatus(text) { domainStatus = text; },
     stop() { cleanup(); },
   };
 }
