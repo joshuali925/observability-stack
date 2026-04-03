@@ -454,35 +454,84 @@ export function printTable(headers, rows) {
 
 // ── ASCII Art Animations ─────────────────────────────────────────────────────
 
+const SPINNER_WORDS = [
+  'tracenoodling', 'spanwrangling', 'metricsniffing', 'logchurning',
+  'dashgawking', 'alertyawning', 'flamegraphing', 'latencynibbling',
+  'uptimewishing', 'pagernuzzling', 'histogrambling', 'cardinoodling',
+  'sampletasting', 'retentionmunching', 'slogandering', 'tracewidgling',
+  'percentiling', 'scrapetinkling', 'exemplargling', 'aggregoosing',
+  'downtimesnoozing', 'instrumentoodling', 'correlooking', 'anomasniffing',
+  'telemetrilling', 'baselinuzzling', 'threshwondering', 'observanoodling',
+  'spanstitching', 'dashboardling',
+];
+
+const GRADIENT_COLORS = [
+  '#B07FFF', '#A88BFF', '#9E9AFF', '#8FB0FF', '#6EC8F5',
+  '#6BCBA0', '#6BCB77', '#A0D86B', '#FFD93D', '#FFB347',
+  '#FF8C6B', '#FF6B6B', '#FF6B9D', '#D07FFF', '#B07FFF',
+];
+
+function createWordRotator() {
+  const shuffled = [...SPINNER_WORDS].sort(() => Math.random() - 0.5);
+  let idx = 0;
+  let lastSwap = Date.now();
+  let offset = 0;
+  let lastShift = Date.now();
+  return () => {
+    const now = Date.now();
+    if (now - lastSwap >= 10_000) {
+      idx = (idx + 1) % shuffled.length;
+      lastSwap = now;
+    }
+    if (now - lastShift >= 250) {
+      offset = (offset + 1) % GRADIENT_COLORS.length;
+      lastShift = now;
+    }
+    const word = shuffled[idx];
+    const len = GRADIENT_COLORS.length;
+    return [...word].map((ch, i) =>
+      chalk.hex(GRADIENT_COLORS[((offset - i) % len + len) % len])(ch)
+    ).join('');
+  };
+}
+
 // Owl searching through data — for OpenSearch domain provisioning
 const OPENSEARCH_FRAMES = [
   [
+    '',
+    "        ,___,",
     '        {o,o}    ◇ searching...',
-    '        |)__)    ◇ ◇',
+    '        /)__)',
     '        -"-"-    ◇ ◇ ◇',
-    '       /|   |\\              ',
-    '      ˢᵉᵃʳᶜʰⁱⁿᵍ ᵗʰᵉ ⁱⁿᵈᵉˣ ',
+    null,
+    '',
   ],
   [
+    '',
+    "        ,___,",
     '        {O,o}      ◈ indexing...',
-    '        |)__)      ◈ ◈',
+    '        /)__)',
     '        -"-"-      ◈ ◈ ◈',
-    '       /|   |\\              ',
-    '      ˢᶜᵃⁿⁿⁱⁿᵍ ᶜˡᵘˢᵗᵉʳˢ   ',
+    null,
+    '',
   ],
   [
+    '',
+    "        ,___,",
     '        {o,O}        ◆ mapping...',
-    '        |)__)        ◆ ◆',
+    '        /)__)',
     '        -"-"-        ◆ ◆ ◆',
-    '       /|   |\\              ',
-    '      ᵐᵃᵖᵖⁱⁿᵍ ˢʰᵃʳᵈˢ      ',
+    null,
+    '',
   ],
   [
+    '',
+    "        ,___,",
     '        {O,O}  ★ found it!',
-    '        |)__)  ★ ★',
+    '        /)__)',
     '        -"-"-  ★ ★ ★',
-    '       /|   |\\              ',
-    '      ᵃˡᵐᵒˢᵗ ʳᵉᵃᵈʸ...     ',
+    null,
+    '',
   ],
 ];
 
@@ -490,24 +539,19 @@ const OPENSEARCH_FRAMES = [
 const FISH_RIGHT = '><(((º>';
 const FISH_LEFT = '<º)))><';
 const PIPE_WIDTH = 36;
-const PIPE_CAPTIONS = [
-  'ᵈᵃᵗᵃ ᶠˡᵒʷⁱⁿᵍ ᵗʰʳᵒᵘᵍʰ',
-  'ᵇᵘⁱˡᵈⁱⁿᵍ ᵗʰᵉ ˢᵗʳᵉᵃᵐ',
-  'ᶜᵒⁿⁿᵉᶜᵗⁱⁿᵍ ⁿᵒᵈᵉˢ',
-  'ᵃˡᵐᵒˢᵗ ᵗʰᵉʳᵉ...',
-];
 
-function buildPipelineFrame(pos, goingRight) {
+function buildPipelineFrame(pos, goingRight, caption) {
   const fish = goingRight ? FISH_RIGHT : FISH_LEFT;
   const lane = ' '.repeat(PIPE_WIDTH);
   const row = lane.slice(0, pos) + fish + lane.slice(pos + fish.length);
   const pipe = '═'.repeat(PIPE_WIDTH);
-  const caption = PIPE_CAPTIONS[Math.floor(pos / (PIPE_WIDTH / PIPE_CAPTIONS.length)) % PIPE_CAPTIONS.length];
   return [
+    '',
     `  ${pipe}`,
     `  ${row}`,
     `  ${pipe}`,
     `  ${caption}`,
+    '',
   ];
 }
 
@@ -532,9 +576,15 @@ export function createAsciiAnimation(type) {
   // OpenSearch state
   let osFrame = 0;
 
+  const getWord = createWordRotator();
+
   function getFrame() {
-    if (isOpenSearch) return OPENSEARCH_FRAMES[(osFrame++) % OPENSEARCH_FRAMES.length];
-    const frame = buildPipelineFrame(fishPos, goingRight);
+    const word = getWord();
+    if (isOpenSearch) {
+      return OPENSEARCH_FRAMES[(osFrame++) % OPENSEARCH_FRAMES.length]
+        .map((l) => l === null ? `      ${word}` : l);
+    }
+    const frame = buildPipelineFrame(fishPos, goingRight, word);
     if (goingRight) { fishPos++; if (fishPos >= maxPos) goingRight = false; }
     else { fishPos--; if (fishPos <= 0) goingRight = true; }
     return frame;
@@ -570,7 +620,7 @@ export function createAsciiAnimation(type) {
       process.on('SIGINT', onSigint);
       lineCount = 0;
       render();
-      timer = setInterval(render, isOpenSearch ? 600 : 120);
+      timer = setInterval(render, isOpenSearch ? 500 : 250);
     },
     /** Update the status text shown below the art */
     setStatus(fn) { statusFn = fn; },
