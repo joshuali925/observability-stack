@@ -16,10 +16,7 @@ Deploy the Observability Stack to AWS using managed services. This creates the s
 Interactive single-command deploy. Creates all resources, configures dashboards, and optionally launches an EC2 instance running the [OpenTelemetry Demo](https://opentelemetry.io/docs/demo/) for sample telemetry.
 
 ```bash
-cd aws/cli-installer && npm install
-node bin/cli-installer.mjs --managed \
-  --pipeline-name obs-stack \
-  --region us-west-2
+bash -c "$(curl -fsSL https://raw.githubusercontent.com/opensearch-project/observability-stack/main/install.sh)" -- --deployment-target=aws
 ```
 
 Takes ~15 minutes. See [aws/cli-installer/README.md](https://github.com/opensearch-project/observability-stack/tree/main/aws/cli-installer) for full options.
