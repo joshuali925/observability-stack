@@ -1,4 +1,4 @@
-name: CLI Installer Release Drafter
+name: Release drafter
 
 on:
   push:
