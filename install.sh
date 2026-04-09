@@ -956,16 +956,7 @@ run_aws_installer() {
         exit 1
     fi
 
-    # Clone repo and install deps
-    echo -e "  Cloning repository..."
-    TMPDIR=$(mktemp -d)
-    git clone --depth 1 "$REPO_URL" "$TMPDIR" --quiet
-    cd "$TMPDIR/aws/cli-installer"
-    npm install --silent 2>/dev/null
-
-    # Forward args to CLI
-    echo ""
-    node bin/cli-installer.mjs "${AWS_CLI_ARGS[@]}"
+    npx -y @opensearch-project/observability-stack "${AWS_CLI_ARGS[@]}"
 }
 
 main() {

@@ -5,7 +5,7 @@ Deploy the [Observability Stack](https://github.com/opensearch-project/observabi
 ## Quick Start
 
 ```bash
-bash -c "$(curl -fsSL https://raw.githubusercontent.com/opensearch-project/observability-stack/main/install.sh)" -- --deployment-target=aws
+npx @opensearch-project/observability-stack
 ```
 
 Takes ~15 minutes. When complete, the CLI prints a dashboard URL — open it and you're in.
