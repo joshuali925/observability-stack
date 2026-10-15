@@ -12,6 +12,7 @@ const env = {
 };
 
 const opensearchType = (app.node.tryGetContext('opensearchType') as 'managed' | 'serverless') || 'managed';
+const enableDemo = String(app.node.tryGetContext('enableDemo') ?? true) !== 'false';
 
 // Slow-changing infra: OpenSearch domain/collection, AMP workspace, DQS data source
 const infra = new InfraStack(app, 'ObsInfra', {
@@ -30,5 +31,5 @@ new ObservabilityStack(app, 'ObservabilityStack', {
   infra,
   minOcu: 1,
   maxOcu: 4,
-  enableDemo: true,
+  enableDemo,
 });

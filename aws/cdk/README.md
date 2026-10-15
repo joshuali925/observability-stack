@@ -39,9 +39,12 @@ osVolumeSize: 100,
 // OSIS pipeline capacity (OpenSearch Compute Units)
 minOcu: 1,
 maxOcu: 4,
+```
 
-// Launch EC2 instance with OpenTelemetry Demo workloads
-enableDemo: true,
+The [demo workload](#demo-workload) is deployed by default. To skip it:
+
+```bash
+cdk deploy --all -c enableDemo=false
 ```
 
 ## Architecture
@@ -87,7 +90,7 @@ aws cloudformation describe-stacks --stack-name ObservabilityStack \
 | `OpenSearchAppEndpoint` | OpenSearch Application root URL |
 | `OpenSearchEndpoint` | OpenSearch domain endpoint |
 | `PrometheusWorkspaceId` | Amazon Managed Prometheus workspace ID |
-| `DemoInstanceId` | EC2 instance ID (when `enableDemo: true`) |
+| `DemoInstanceId` | EC2 instance ID (when the demo workload is enabled) |
 
 ## Sending Telemetry
 
@@ -118,7 +121,7 @@ The IAM principal sending data needs `osis:Ingest` permission on the pipeline AR
 
 ## Demo Workload
 
-When `enableDemo: true`, an EC2 instance launches running the [OpenTelemetry Demo](https://opentelemetry.io/docs/demo/) — a full e-commerce microservices app (~20 services) that generates realistic traces, logs, and metrics. Data flows through the OTel Collector → OSIS pipeline → OpenSearch + AMP.
+Unless you deploy with `-c enableDemo=false`, an EC2 instance launches running the [OpenTelemetry Demo](https://opentelemetry.io/docs/demo/) — a full e-commerce microservices app (~20 services) that generates realistic traces, logs, and metrics. Data flows through the OTel Collector → OSIS pipeline → OpenSearch + AMP.
 
 ## Useful Commands
 
