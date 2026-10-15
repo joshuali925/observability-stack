@@ -23,9 +23,9 @@ export class IngestionPipeline extends Construct {
     const stack = cdk.Stack.of(this);
     this.pipelineName = `obs-stack-${stack.stackName}`.toLowerCase().replace(/[^a-z0-9-]/g, '-').slice(0, 28);
 
-    const opensearchEndpoint = props.domainEndpoint.startsWith('https://')
-      ? props.domainEndpoint
-      : `https://${props.domainEndpoint}`;
+    // CollectionEndpoint includes the scheme; DomainEndpoint doesn't. Both are
+    // unresolved tokens at synth time, so the prefix can't be detected.
+    const opensearchEndpoint = props.serverless ? props.domainEndpoint : `https://${props.domainEndpoint}`;
     const prometheusUrl = `https://aps-workspaces.${props.region}.amazonaws.com/workspaces/${props.prometheusWorkspaceId}/api/v1/remote_write`;
 
     const renderFn = props.serverless ? renderServerlessPipelineYaml : renderManagedPipelineYaml;
