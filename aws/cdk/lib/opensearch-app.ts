@@ -30,7 +30,7 @@ export class OpenSearchAppConstruct extends Construct {
       bundling: { externalModules: ['@aws-sdk/*'] },
     });
     appFn.addToRolePolicy(new iam.PolicyStatement({
-      actions: ['es:*'],
+      actions: ['es:*', 'aoss:BatchGetCollection'],
       resources: ['*'],
     }));
     appFn.addToRolePolicy(new iam.PolicyStatement({
