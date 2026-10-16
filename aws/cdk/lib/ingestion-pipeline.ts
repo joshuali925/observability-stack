@@ -224,6 +224,7 @@ otel-logs-pipeline:
         hosts:
           - '${cfg.opensearchEndpoint}'
         index: 'logs-otel-v1'
+        index_type: custom
         template_type: 'index-template'
         template_content: '${LOGS_TEMPLATE}'
         aws:
@@ -255,6 +256,7 @@ traces-raw-pipeline:
         hosts:
           - '${cfg.opensearchEndpoint}'
         index: 'otel-v1-apm-span'
+        index_type: custom
         template_type: 'index-template'
         template_content: '${TRACES_TEMPLATE}'
         aws:
@@ -286,6 +288,7 @@ service-map-pipeline:
         routes:
           - otel_apm_service_map_route
         index: 'otel-v2-apm-service-map'
+        index_type: custom
         template_type: 'index-template'
         template_content: '${SERVICE_MAP_TEMPLATE}'
     - prometheus:
